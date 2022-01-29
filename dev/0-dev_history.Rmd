@@ -66,6 +66,7 @@ usethis::use_package_doc()
 
 # Set CI
 # _GitHub
+gitcreds::gitcreds_set()
 usethis::use_github()
 usethis::use_github_action_check_standard()
 usethis::use_github_action("pkgdown")
