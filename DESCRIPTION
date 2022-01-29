@@ -1,15 +1,23 @@
 Package: servers.tools
-Version: 0.0.0.9000
 Title: Extra Tools For Server Use
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Sebastien", "Rochette", , "sebastien@thinkr.fr", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-1565-9313")),
+    person("ThinkR", role = "cph")
+  )
 Description: Use tools.
-Authors@R: c(person(given = "Sebastien",
-         family = "Rochette",
-         role = c("aut", "cre"),
-         email = "sebastien@thinkr.fr",
-         comment = c(ORCID = "0000-0002-1565-9313")),
-  person(given = "ThinkR",
-         role = "cph"))
 License: MIT + file LICENSE
+Imports: 
+    fs,
+    shiny,
+    shinyFiles
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: 
+    knitr
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2

@@ -34,6 +34,8 @@ usethis::use_mit_license("Sébastien Rochette")
 usethis::use_git()
 # Deal with classical files to ignore
 usethis::git_vaccinate()
+# Use main for primary branch
+usethis::git_default_branch_rename()
 ```
 
 # Set extra sources of documentation
@@ -64,6 +66,7 @@ usethis::use_package_doc()
 
 # Set CI
 # _GitHub
+usethis::use_github()
 usethis::use_github_action_check_standard()
 usethis::use_github_action("pkgdown")
 usethis::use_github_action("test-coverage")

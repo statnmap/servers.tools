@@ -1,0 +1,4 @@
+Name: File explorer
+Description: Explore your files.
+Binding: file_explorer
+Interactive: true
