@@ -10,8 +10,11 @@ Description: Use tools.
 License: MIT + file LICENSE
 Imports: 
     fs,
+    rstudioapi,
     shiny,
-    shinyFiles
+    shinyFiles,
+    shinyTree,
+    utils
 Suggests: 
     knitr,
     rmarkdown,

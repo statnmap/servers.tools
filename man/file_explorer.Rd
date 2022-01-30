@@ -5,10 +5,13 @@
 \title{file_explorer}
 \usage{
 file_explorer(
+  path = getwd(),
   viewer = getOption(x = "servers.tools.viewer", default = "dialog")
 )
 }
 \arguments{
+\item{path}{Custom path accessible by default}
+
 \item{viewer}{Where to display the gadget: \code{"dialog"},
 \code{"pane"} or \code{"browser"} (see \code{\link[shiny]{viewer}}).}
 }
@@ -22,7 +25,12 @@ file_explorer
 \dontrun{
 library(shiny)
 library(shinyFiles)
+library(shinyTree)
 # shinyFiles::shinyFilesExample()
 file_explorer()
+
+# Use with custom path
+cat("test", file = tempfile("custom", fileext = ".R"))
+file_explorer(path = tempdir())
 }
 }

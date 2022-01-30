@@ -2,9 +2,10 @@
 
 #' file_explorer
 #'
+#' @param path Custom path accessible by default
 #' @param viewer Where to display the gadget: `"dialog"`,
 #'  `"pane"` or `"browser"` (see \code{\link[shiny]{viewer}}).
-#'  
+#'
 #' @return UI gadget
 #' @export
 #'
@@ -12,10 +13,16 @@
 #' \dontrun{
 #' library(shiny)
 #' library(shinyFiles)
+#' library(shinyTree)
 #' # shinyFiles::shinyFilesExample()
 #' file_explorer()
+#' 
+#' # Use with custom path
+#' cat("test", file = tempfile("custom", fileext = ".R"))
+#' file_explorer(path = tempdir())
 #' }
-file_explorer <- function(viewer = getOption(x = "servers.tools.viewer", default = "dialog")) {
+file_explorer <- function(path = getwd(),
+                          viewer = getOption(x = "servers.tools.viewer", default = "dialog")) {
   viewer <- match.arg(viewer, choices = c("dialog", "pane", "browser"))
 
   if (viewer == "browser") {
@@ -31,20 +38,27 @@ file_explorer <- function(viewer = getOption(x = "servers.tools.viewer", default
       height = 750
     )
   }
-
+  
+  volumes <- c("Current Dir" = getwd(), Home = fs::path_home(), "R Installation" = R.home(), "Temp dir" = tempdir(), getVolumes()())
+  
+  if (!is.null("path")) {
+    volumes <- c("Custom Path" = path, volumes)
+  }
+      
+        
   runGadget(
     app = explorer_ui(
-      id = "explorer"
+      id = "explorer", volumes = volumes
     ),
     server = function(input, output, session) {
-      explorer_server("explorer")
+      explorer_server("explorer", path = path, volumes = volumes)
     },
     viewer = inviewer
   )
 }
 
 #' @noRd
-explorer_ui <- function(id) {
+explorer_ui <- function(id, volumes = NULL) {
   ns <- NS(id)
   ui <- fluidPage(
     # theme = bslib::bs_theme(version = 4),
@@ -54,42 +68,43 @@ explorer_ui <- function(id) {
     ),
     sidebarLayout(
       sidebarPanel(
+        h4("Main directory"),
+        selectInput(ns("volumes"), "Select primary volume", choices = volumes, selected = 1),
+        h4("Sources"),
         tags$div(
           shinyFilesButton(ns("file"), "Source File select", "Please select a file", multiple = TRUE, viewtype = "detail"),
           tags$p(),
           tags$p("Select one or multiple files.")
         ),
         tags$div(
-          tags$hr(),
           shinyDirButton(ns("directoryfrom"), "Source Folder select", "Please select a folder source"),
           tags$p(),
           tags$p("Select a directory."),
         ),
+        tags$hr(),
+        h4("Targets"),
         tags$div(
-          tags$hr(),
           shinyDirButton(ns("directoryto"), "Target Folder select", "Please select a folder target"),
           tags$p(),
           tags$p("Select a directory."),
         ),
         tags$div(
-          tags$hr(),
-          shinySaveButton(ns("save"), "Target File Create", "Save file as...", 
-                          # filetype = list(text = "txt", picture = c("jpeg", "jpg")),
-                          viewtype = "detail"),
+          shinySaveButton(ns("save"), "Target File Create", "Save file as...",
+            # filetype = list(text = "txt", picture = c("jpeg", "jpg")),
+            viewtype = "detail"
+          ),
           tags$p(),
-          tags$p('Create a new file path')
-        ),
-        tags$div(
-          tags$hr(),
-          shiny::actionButton(ns("savefiletodir"), label = "Save Source files to Target directory"),
-          tags$p("Will save sources files listed into directory selected"),
-          shiny::actionButton(ns("savefiletofile"), label = "Save Source file to new Target file"),
-          tags$p("Will save first source file listed into new file name created"),
-          shiny::actionButton(ns("savedirtodir"), label = "Save Source Folder to Target Folder"),
-          tags$p("Will save first source folder listed into target folder listed")
+          tags$p("Create a new file path")
         )
       ),
       mainPanel(
+        h4("Exploration only"),
+        shinyTree(ns("tree"), types= #Types is in the same format that jstree expects
+                    "{
+          'directory' : { 'icon' : 'glyphicon glyphicon-folder-open' },
+          'default' : { 'icon' : 'glyphicon glyphicon-file', 'valid_children' : [] }
+         }"
+        ),
         tags$h4("Outputs of selections"),
         tags$p("Source filepaths selected"),
         verbatimTextOutput(ns("filepaths")),
@@ -98,7 +113,32 @@ explorer_ui <- function(id) {
         tags$p("Target dir path selected"),
         verbatimTextOutput(ns("directorytopath")),
         tags$p("file saved"),
-        verbatimTextOutput(ns("savefile"))
+        verbatimTextOutput(ns("savefile")),
+        fluidRow(
+          tags$hr(),
+          column(
+            width = 6,
+            h4("Save actions"),
+            tags$div(
+              shiny::actionButton(ns("savefiletodir"), label = "Save Source files to Target directory"),
+              tags$p("Will save sources files listed into directory selected"),
+              shiny::actionButton(ns("savefiletofile"), label = "Save Source file to new Target file"),
+              tags$p("Will save first source file listed into new file name created"),
+              shiny::actionButton(ns("savedirtodir"), label = "Save Source Folder to Target Folder"),
+              tags$p("Will save first source folder listed into target folder listed")
+            )
+          ),
+          column(
+            width = 6,
+            h4("Open actions"),
+            tags$div(
+              shiny::actionButton(ns("openfile"), label = "Open Source Files in RStudio"),
+              tags$p("Will open source files listed in your RStudio"),
+              shiny::actionButton(ns("openbrowser"), label = "Open Source Files in web browser"),
+              tags$p("Will open source files listed in your Web Browser")
+            )
+          )
+        )
       )
     )
   )
@@ -106,15 +146,29 @@ explorer_ui <- function(id) {
 
 #' @import shiny
 #' @import shinyFiles
+#' @import shinyTree
+#' @importFrom utils browseURL
 #' @noRd
-explorer_server <- function(id) {
+explorer_server <- function(id, path = NULL, volumes = NULL) {
   moduleServer(
     id = id,
     module = function(input, output, session) {
+      # browser()
+
       ns <- session$ns
 
-      volumes <- c("Current Dir" = getwd(), Home = fs::path_home(), "R Installation" = R.home(), "Temp dir" = tempdir(), getVolumes()())
-
+      # updateSelectInput(session = session, inputId = ns("volumes"), choices = volumes, selected = 1)
+      if (!is.null(volumes)) {
+      treeStructure <- listFiles(maxDepth = 4, path = volumes[1])
+      output$tree <- renderTree(treeStructure)
+      }
+  
+      # Show Tree ----
+      observeEvent(input$volumes, {
+        treeStructure <- listFiles(maxDepth = 4, path = input$volumes)
+        updateTree(session, "tree", treeStructure)
+      })
+      
       # Find file ----
       shinyFileChoose(input, "file", roots = volumes, session = session, restrictions = system.file(package = "base"))
 
@@ -136,8 +190,8 @@ explorer_server <- function(id) {
           parseDirPath(volumes, input$directoryfrom)
         }
       })
-      
-            # Find target dir ----
+
+      # Find target dir ----
       shinyDirChoose(input, "directoryto", roots = volumes, session = session, restrictions = system.file(package = "base"), allowDirCreate = TRUE)
 
       output$directorytopath <- renderPrint({
@@ -158,7 +212,7 @@ explorer_server <- function(id) {
           parseSavePath(volumes, input$save)
         }
       })
-      
+
       # Save from to ----
       # File to dir
       observeEvent(input$savefiletodir, {
@@ -174,7 +228,7 @@ explorer_server <- function(id) {
           cat("file(s)", files$datapath, "copied into", dirto)
         }
       })
-      
+
       # File to new file
       observeEvent(input$savefiletofile, {
         # browser()
@@ -189,7 +243,7 @@ explorer_server <- function(id) {
           cat("file", files$datapath[1], "copied into", fileto$datapath)
         }
       })
-      
+
       # Dir to dir
       observeEvent(input$savedirtodir, {
         # browser()
@@ -208,6 +262,63 @@ explorer_server <- function(id) {
           cat("folder", dirfrom, "copied into", dirtopath)
         }
       })
+
+      # Open ----
+      # In RStudio
+      observeEvent(input$openfile, {
+        # browser()
+        if (is.integer(input$file)) {
+          modalDialog(title = "No files have been selected")
+        } else {
+          files <- parseFilePaths(volumes, input$file)
+          lapply(files$datapath, function(x) rstudioapi::navigateToFile(x))
+        }
+      })
+
+      # In Web browser
+      observeEvent(input$openbrowser, {
+        # browser()
+        if (is.integer(input$file)) {
+          modalDialog(title = "No files have been selected")
+        } else {
+          files <- parseFilePaths(volumes, input$file)
+          lapply(files$datapath, function(x) browseURL(x))
+        }
+      })
     }
   )
+}
+
+#' List file in subdirectory
+#'
+#' @param maxDepth max depth to explore folders
+#' @param path path to explore
+#' @param currentDepth opened depth
+#'
+#' @export
+#' @return Tree list object
+listFiles <- function(path, maxDepth = 4, currentDepth = 1) {
+  # browser()
+  dirs <- list.dirs(path, recursive = FALSE, full.names = FALSE)
+  allFiles <- list.files(path) #, list.dirs(recursive = FALSE, full.names = FALSE))
+  files <- setdiff(allFiles, dirs)
+  if (length(dirs) != 0 && (maxDepth == 0 || currentDepth < maxDepth)) {
+    subtree <- append(lapply(
+      dirs,
+      function(nextDir) {
+        nextDir <- structure(listFiles(maxDepth = maxDepth, path = file.path(path, nextDir), currentDepth = currentDepth + 1), sttype = "directory")
+      }
+    ), files)
+    names(subtree) <- append(dirs, files)
+    subtree
+  } else {
+    subtree <- append(lapply(
+      dirs,
+      function(nextDir) {
+        structure(nextDir, sttype = "directory")
+      }
+    ), files)
+    names(subtree) <- append(dirs, files)
+    subtree
+  }
 }

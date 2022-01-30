@@ -34,8 +34,13 @@ The file explorer is a RStudio addin.
 #' \dontrun{
 library(shiny)
 library(shinyFiles)
+library(shinyTree)
 # shinyFiles::shinyFilesExample()
 file_explorer()
+
+# Use with custom path
+cat("test", file = tempfile("custom", fileext = ".R"))
+file_explorer(path = tempdir())
 #' }
 ```
 
