@@ -30,4 +30,10 @@
   <url>
     <loc>/reference/index.html</loc>
   </url>
+  <url>
+    <loc>/reference/listFiles.html</loc>
+  </url>
+  <url>
+    <loc>/reference/servers.tools-package.html</loc>
+  </url>
 </urlset>

@@ -58,13 +58,16 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">file_explorer</span><span class="op">(</span>
+  path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>,
   viewer <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"servers.tools.viewer"</span>, default <span class="op">=</span> <span class="st">"dialog"</span><span class="op">)</span>
 <span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>viewer</dt>
+    <dl><dt>path</dt>
+<dd><p>Custom path accessible by default</p></dd>
+<dt>viewer</dt>
 <dd><p>Where to display the gadget: <code>"dialog"</code>,
 <code>"pane"</code> or <code>"browser"</code> (see <code><a href="https://rdrr.io/pkg/shiny/man/viewer.html" class="external-link">viewer</a></code>).</p></dd>
 </dl></div>
@@ -78,8 +81,13 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
 <span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://shiny.rstudio.com/" class="external-link">shiny</a></span><span class="op">)</span></span>
 <span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomasp85/shinyFiles" class="external-link">shinyFiles</a></span><span class="op">)</span></span>
+<span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">shinyTree</span><span class="op">)</span></span>
 <span class="r-in"><span class="co"># shinyFiles::shinyFilesExample()</span></span>
 <span class="r-in"><span class="fu">file_explorer</span><span class="op">(</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="co"># Use with custom path</span></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"test"</span>, file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"custom"</span>, fileext <span class="op">=</span> <span class="st">".R"</span><span class="op">)</span><span class="op">)</span></span>
+<span class="r-in"><span class="fu">file_explorer</span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
 </code></pre></div>
     </div>
